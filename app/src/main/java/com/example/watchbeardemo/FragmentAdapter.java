@@ -14,13 +14,15 @@ public class FragmentAdapter extends FragmentStateAdapter {
         super(fragmentManager, lifecycle);
     }
 
+    private int counter = 1;
     @NonNull
     @Override
     public Fragment createFragment(int position) {
-        Fragment fragment = new MyFragment();
-        Bundle args = new Bundle();
-        args.putString(MyFragment.TITLE, "Tab " + (position+1));
-        fragment.setArguments(args);
+        Fragment fragment = new Fragment();
+
+        if(position == 0){
+            fragment = new MyFragment();
+        }
         return fragment;
     }
 

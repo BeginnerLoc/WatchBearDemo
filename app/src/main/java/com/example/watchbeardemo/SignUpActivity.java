@@ -18,7 +18,12 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.auth.UserProfileChangeRequest;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+
+import java.util.HashMap;
 
 public class SignUpActivity extends AppCompatActivity {
 
@@ -27,6 +32,7 @@ public class SignUpActivity extends AppCompatActivity {
     private CheckBox cboxAgree;
     private FirebaseAuth mAuth;
 
+    private DatabaseReference reference;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -107,18 +113,41 @@ public class SignUpActivity extends AppCompatActivity {
                                             Toast.LENGTH_LONG)
                                     .show();
 
+                            String username = email.substring(0, email.indexOf("@"));
+
+                            FirebaseUser firebaseUser = mAuth.getCurrentUser();
+
                             UserProfileChangeRequest profileUpdate = new UserProfileChangeRequest.Builder()
-                                    .setDisplayName(email)
+                                    .setDisplayName(username)
                                     .build();
-                            mAuth.getCurrentUser().updateProfile(profileUpdate);
+                            firebaseUser.updateProfile(profileUpdate);
+
+                            String userId = firebaseUser.getUid();
+
+                            reference = FirebaseDatabase.getInstance("https://watchbear-58e86-default-rtdb.asia-southeast1.firebasedatabase.app").getReference("Users").child(userId);
+
+                            HashMap<String, String> hashMap = new HashMap<>();
+                            hashMap.put("id", userId);
+                            hashMap.put("username", username);
+                            hashMap.put("imageURL", "default");
+
+                            reference.setValue(hashMap).addOnCompleteListener(new OnCompleteListener<Void>() {
+                                @Override
+                                public void onComplete(@NonNull Task<Void> task) {
+                                    if (task.isSuccessful()){
+                                        // if the user created intent to login activity
+                                        Intent intent
+                                                = new Intent(SignUpActivity.this,
+                                                SignInActivity.class);
+                                        startActivity(intent);
+                                        finish();
+                                    }
+                                }
+                            });
                             // hide the progress bar
                             //progressBar.setVisibility(View.GONE);
 
-                            // if the user created intent to login activity
-                            Intent intent
-                                    = new Intent(SignUpActivity.this,
-                                    SignInActivity.class);
-                            startActivity(intent);
+
                         }
                         else {
 

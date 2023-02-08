@@ -18,6 +18,7 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.UserProfileChangeRequest;
 
 public class SignUpActivity extends AppCompatActivity {
 
@@ -106,6 +107,10 @@ public class SignUpActivity extends AppCompatActivity {
                                             Toast.LENGTH_LONG)
                                     .show();
 
+                            UserProfileChangeRequest profileUpdate = new UserProfileChangeRequest.Builder()
+                                    .setDisplayName(email)
+                                    .build();
+                            mAuth.getCurrentUser().updateProfile(profileUpdate);
                             // hide the progress bar
                             //progressBar.setVisibility(View.GONE);
 
@@ -121,7 +126,7 @@ public class SignUpActivity extends AppCompatActivity {
                             Toast.makeText(
                                             getApplicationContext(),
                                             task.getException().toString(),
-                                            Toast.LENGTH_LONG)
+                                            Toast.LENGTH_SHORT)
                                     .show();
                             Log.d("loc", task.getException().toString());
 

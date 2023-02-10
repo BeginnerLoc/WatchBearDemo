@@ -3,12 +3,16 @@ package com.example.watchbeardemo;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,8 +25,12 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
+import Adapter.MessageAdapter;
+import Models.Chat;
 import Models.User;
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -34,8 +42,12 @@ public class MessageActivity extends AppCompatActivity {
     EditText textSend;
     FirebaseUser firebaseUser;
 
+    MessageAdapter messageAdapter;
+    List<Chat> mChat = new ArrayList<>();
+    RecyclerView recyclerView;
     Intent intent;
 
+    DatabaseReference reference;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,12 +57,14 @@ public class MessageActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         getSupportActionBar().setTitle("");
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 finish();
             }
         });
+
 
         profile_image = findViewById(R.id.profile_image);
         username = findViewById(R.id.username);
@@ -61,18 +75,27 @@ public class MessageActivity extends AppCompatActivity {
         String userid = intent.getStringExtra("userid");
         firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
+
+        recyclerView = findViewById(R.id.recycler_view);
+        recyclerView.setHasFixedSize(true);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(getApplicationContext());
+        linearLayoutManager.setStackFromEnd(true);
+        recyclerView.setLayoutManager(linearLayoutManager);
+
         btnSend.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 String msg = textSend.getText().toString();
                 if(!msg.equals("")){
                     sendMessage(firebaseUser.getUid(), userid, msg);
+                    Log.d("test", firebaseUser.getUid() + " - " + userid);
                 }else{
                     Toast.makeText(MessageActivity.this, "Can't send empty message", Toast.LENGTH_SHORT).show();
                 }
                 textSend.setText("");
             }
         });
+
 
         DatabaseReference reference = FirebaseDatabase.getInstance("https://watchbear-58e86-default-rtdb.asia-southeast1.firebasedatabase.app")
                 .getReference("Users").child(userid);
@@ -95,10 +118,39 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
 
-    }
+        messageAdapter = new MessageAdapter(MessageActivity.this, mChat, "default");
+        recyclerView.setAdapter(messageAdapter);
 
+        String currentUserId = firebaseUser.getUid();
+
+        DatabaseReference reference1 = FirebaseDatabase.getInstance("https://watchbear-58e86-default-rtdb.asia-southeast1.firebasedatabase.app")
+                .getReference("Chats");
+        reference1.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                mChat.clear();
+                for(DataSnapshot snapshot1 : snapshot.getChildren()){
+                    Chat chat = snapshot1.getValue(Chat.class);
+                    if(chat.getReceiver().equals(currentUserId) && chat.getSender().equals(userid) ||
+                            chat.getReceiver().equals(userid) && chat.getSender().equals(currentUserId)){
+                        mChat.add(chat);
+                        messageAdapter = new MessageAdapter(MessageActivity.this, mChat, "default");
+                        recyclerView.setAdapter(messageAdapter);
+                        messageAdapter.notifyDataSetChanged();
+                    }
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+    }
     private void sendMessage(String sender, String receiver, String message){
-        DatabaseReference reference = FirebaseDatabase.getInstance("https://watchbear-58e86-default-rtdb.asia-southeast1.firebasedatabase.app")
+         reference = FirebaseDatabase.getInstance("https://watchbear-58e86-default-rtdb.asia-southeast1.firebasedatabase.app")
                 .getReference();
 
         HashMap<String, Object> hashmap = new HashMap<>();
@@ -106,5 +158,10 @@ public class MessageActivity extends AppCompatActivity {
         hashmap.put("receiver", receiver);
         hashmap.put("message", message);
         reference.child("Chats").push().setValue(hashmap);
+    }
+
+    private void readMessage(String myId, String userId){
+
+
     }
 }

@@ -1,4 +1,4 @@
-package com.example.watchbeardemo;
+package Adapter;
 
 import android.os.Bundle;
 
@@ -7,6 +7,8 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.Lifecycle;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
+
+import com.example.watchbeardemo.MyFragment;
 
 public class FragmentAdapter extends FragmentStateAdapter {
 

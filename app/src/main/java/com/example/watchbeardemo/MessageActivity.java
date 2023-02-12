@@ -48,6 +48,8 @@ public class MessageActivity extends AppCompatActivity {
     Intent intent;
 
     DatabaseReference reference;
+    ValueEventListener seenListener;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -108,7 +110,7 @@ public class MessageActivity extends AppCompatActivity {
                 if(user.getImageURL().equals("default")){
                     profile_image.setImageResource(R.mipmap.ic_launcher_round);
                 }else {
-                    Glide.with(MessageActivity.this).load(user.getImageURL()).into(profile_image);
+                    Glide.with(getApplicationContext()).load(user.getImageURL()).into(profile_image);
                 }
             }
 
@@ -148,6 +150,7 @@ public class MessageActivity extends AppCompatActivity {
             }
         });
 
+        seenMessage(userid);
     }
     private void sendMessage(String sender, String receiver, String message){
          reference = FirebaseDatabase.getInstance("https://watchbear-58e86-default-rtdb.asia-southeast1.firebasedatabase.app")
@@ -157,11 +160,46 @@ public class MessageActivity extends AppCompatActivity {
         hashmap.put("sender", sender);
         hashmap.put("receiver", receiver);
         hashmap.put("message", message);
+        hashmap.put("isSeen", false);
+
         reference.child("Chats").push().setValue(hashmap);
     }
 
-    private void readMessage(String myId, String userId){
+    private void seenMessage(String userId){
+        reference = FirebaseDatabase.getInstance("https://watchbear-58e86-default-rtdb.asia-southeast1.firebasedatabase.app")
+                .getReference("chats");
 
+        seenListener = reference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                for(DataSnapshot snapshot1 : snapshot.getChildren()){
+                    Chat chat = snapshot1.getValue(Chat.class);
+                    if(chat.getReceiver().equals(firebaseUser.getUid()) && chat.getSender().equals(userId) ||
+                            chat.getReceiver().equals(userId) && chat.getSender().equals(firebaseUser.getUid())){
 
+                        HashMap<String, Object> hashMap = new HashMap<>();
+                        hashMap.put("isSeen", true);
+                        snapshot1.getRef().updateChildren(hashMap);
+                    }
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    @Override
+    protected void onPause(){
+        super.onPause();
+        reference.removeEventListener(seenListener);
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
     }
 }

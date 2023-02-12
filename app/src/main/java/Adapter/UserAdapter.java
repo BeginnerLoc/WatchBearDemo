@@ -2,6 +2,7 @@ package Adapter;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,10 +41,14 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.CustomViewHold
     public void onBindViewHolder(@NonNull CustomViewHolder holder, int position) {
         User user = mUsers.get(position);
         holder.username.setText(user.getUsername());
+        if(user.getUsername().equalsIgnoreCase("scammer")){
+            holder.username.setTextColor(Color.parseColor("#ff0000"));
+        }
+
         if (user.getImageURL().equals("default")){
             holder.profile_image.setImageResource(R.mipmap.ic_launcher);
         }else{
-            Glide.with(mContext).load(user.getImageURL()).into(holder.profile_image);
+            holder.profile_image.setImageResource(R.drawable.scammer1);
         }
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
